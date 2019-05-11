@@ -1,8 +1,14 @@
-sh: sh.c
-	gcc -O2 -o sh.out sh.c
+PROG=	sh
+SRCS=	sh.c
 
-debug: sh.c
-	gcc -g -DDEBUG -Wall -Wextra -Wconversion -o sh.out sh.c
+CFLAGS=		-O2 -fstack-protector -D_FORTIFY_SOURCE=2 -pie -fPIE
+LDFLAGS=	-Wl,-z,now -Wl,-z,relro
+
+$(PROG): $(SRCS)
+	gcc $(CFLAGS) $(LDFLAGS) $(SRCS) -o $(PROG).out
+
+debug: $(SRCS)
+	gcc -g -DDEBUG -Wall -Wextra -Wconversion $(SRCS) -o $(PROG).out
 
 clean:
-	rm -f sh.out
+	rm -f $(PROG).out
