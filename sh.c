@@ -26,6 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 
+void	prompt(void);
 char	*rline(char *const, size_t const);
 int	what(char *const []);
 int	cd(char *);
@@ -61,6 +62,8 @@ main(int argc, char *argv[])
 		i = 0;
 		(void)memset(tok, 0, sizeof(tok));
 
+		prompt();
+
 		if ((cp = rline(buf, sizeof(buf))) == NULL) {
 			(void)putchar('\n');
 			return 0;
@@ -91,10 +94,9 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-char *
-rline(char *const buf, size_t const size)
+void
+prompt(void)
 {
-	char *p;
 	static char cwd[CWD_MAX];
 
 	if (getcwd(cwd, CWD_MAX) != NULL) {
@@ -110,6 +112,12 @@ rline(char *const buf, size_t const size)
 	if (fputs("sh) ", stdout) == EOF) {
 		errx(1, "fputs failed");
 	}
+}
+
+char *
+rline(char *const buf, size_t const size)
+{
+	char *p;
 
 	if (fgets(buf, (int)size, stdin) == NULL) {
 		return NULL;
