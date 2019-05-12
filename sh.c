@@ -28,9 +28,11 @@
 
 char	*rline(char *const, size_t const);
 int	what(char *const []);
+int	cd(char *);
 int	exec(char *const []);
 
-#define MAX 80
+#define MAX	80
+#define CWD_MAX	256
 
 int
 main(int argc, char *argv[])
@@ -93,6 +95,17 @@ char *
 rline(char *const buf, size_t const size)
 {
 	char *p;
+	static char cwd[CWD_MAX];
+
+	if (getcwd(cwd, CWD_MAX) != NULL) {
+		(void)printf("[%s] ", cwd);
+#ifdef DEBUG
+	} else {
+		warn("getcwd");
+	}
+#else
+	}
+#endif
 
 	if (fputs("sh) ", stdout) == EOF) {
 		errx(1, "fputs failed");
@@ -103,7 +116,7 @@ rline(char *const buf, size_t const size)
 	}
 
 	if ((p = strchr(buf, '\n')) == NULL) {
-		(void)fprintf(stderr, "line too long\n");
+		(void)fputs("line too long\n", stderr);
 		return NULL;
 	}
 
@@ -114,37 +127,40 @@ rline(char *const buf, size_t const size)
 
 int
 what(char *const argv[]) {
-	char *path;
+	if (strcmp(argv[0], "cd") == 0) {
+		return cd(argv[1]);
+	} else {
+		return exec(argv);
+	}
+}
+
+int
+cd(char *path)
+{
 	char *tmp = NULL;
 	int ret = 0;
 
-	if (strcmp(argv[0], "cd") == 0) {
-		path = argv[1];
-
-		if (path == NULL && (tmp = getenv("HOME")) != NULL) {
-			path = strdup(tmp);
-		}
-
-		/* getenv or strdup failed */
-		if (path == NULL) {
-			warn("%s: null path", argv[0]);
-			return 1;
-		}
-
-		/* TODO replace first '~' with $HOME */
-		if (chdir(path) == -1) {
-			warn("%s: '%s'", argv[0], path);
-			ret = 1;
-		}
-
-		if (tmp != NULL) {
-			free(path);
-		}
-
-		return ret;
+	if (path == NULL && (tmp = getenv("HOME")) != NULL) {
+		path = strdup(tmp);
 	}
 
-	return exec(argv);
+	/* getenv or strdup failed */
+	if (path == NULL) {
+		warn("cd: null path");
+		return 1;
+	}
+
+	/* TODO replace first '~' with $HOME */
+	if (chdir(path) == -1) {
+		warn("cd: '%s'", path);
+		ret = 1;
+	}
+
+	if (tmp != NULL) {
+		free(path);
+	}
+
+	return ret;
 }
 
 int
